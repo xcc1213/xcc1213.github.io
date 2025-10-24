@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态星空</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* 隐藏滚动条 */
+            background: #000; /* 黑色背景模拟夜空 */
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="starCanvas"></canvas>
+
+    <script>
+        // 获取画布并设置为全屏
+        const canvas = document.getElementById('starCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 让画布大小等于窗口大小
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas); // 窗口大小变化时重新调整
+
+
+        // 星星类：定义星星的属性和行为
+        class Star {
+            constructor() {
+                this.reset(); // 初始化星星位置和属性
+            }
+
+            // 重置星星（初始位置或超出屏幕后重新定位）
+            reset() {
+                this.x = Math.random() * canvas.width; // 随机x坐标
+                this.y = Math.random() * canvas.height; // 随机y坐标
+                this.radius = Math.random() * 1.5; // 星星大小（0-1.5px）
+                this.speed = this.radius * 0.8; // 移动速度（大星星移动慢，模拟近远效果）
+                this.alpha = Math.random(); // 初始透明度（0-1）
+                this.alphaSpeed = 0.01 + Math.random() * 0.02; // 闪烁速度
+                this.alphaDir = Math.random() > 0.5 ? 1 : -1; // 闪烁方向（变亮/变暗）
+            }
+
+            // 更新星星状态（移动和闪烁）
+            update() {
+                // 星星移动（向上移动，模拟星空流动）
+                this.y -= this.speed;
+                // 如果星星移出屏幕顶部，重新定位到屏幕底部
+                if (this.y < -this.radius) {
+                    this.reset();
+                    this.y = canvas.height + this.radius; // 从底部重新进入
+                }
+
+                // 星星闪烁（透明度变化）
+                this.alpha += this.alphaSpeed * this.alphaDir;
+                // 透明度边界处理（0-1之间循环）
+                if (this.alpha > 1) {
+                    this.alpha = 1;
+                    this.alphaDir = -1;
+                } else if (this.alpha < 0.2) {
+                    this.alpha = 0.2;
+                    this.alphaDir = 1;
+                }
+            }
+
+            // 绘制星星
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                // 设置星星颜色：白色带透明度，大小不同亮度略有差异
+                const brightness = 0.8 + (this.radius / 1.5) * 0.2; // 大星星更亮
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha * brightness})`;
+                ctx.fill();
+            }
+        }
+
+
+        // 创建星星数组
+        const stars = [];
+        const starCount = 1500; // 星星数量（可调整，越多越密集）
+        for (let i = 0; i < starCount; i++) {
+            stars.push(new Star());
+        }
+
+
+        // 动画循环
+        function animate() {
+            // 绘制黑色背景（半透明，让星星移动有拖影感，可选）
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 更新并绘制所有星星
+            stars.forEach(star => {
+                star.update();
+                star.draw();
+            });
+
+            requestAnimationFrame(animate); // 循环动画
+        }
+
+        // 启动动画
+        animate();
+    </script>
+</body>
+</html>
